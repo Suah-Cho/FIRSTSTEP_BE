@@ -1,5 +1,6 @@
 
 from flask import Flask, jsonify, request
+import utils.utils as utils
 import pymysql
 import json, datetime
 
@@ -25,7 +26,7 @@ def boardlist() :
     cursor = con.cursor()
     cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
     data = cursor.fetchall()
-    return_data = json.dumps(data, default=json_default)
+    # return_data = json.dumps(data, default=json_default)
 
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
@@ -59,6 +60,26 @@ def boardWrite() :
 
 
   return '성공적으로 등록되었습니다:)'
+
+@app.route('/login', methods=['POST'])
+def login() :
+  userData = request.get_json()
+  id_receive = userData['userId']
+  pw_receive = userData['userPW']
+
+  con = getCon()
+  cursor = con.cursor()
+  sql = "SELECT userId, ID, password FROM User WHERE ID = %s AND status = 'active';"
+  cursor.execute(sql, userData['userId'])
+
+  row = cursor.fetchone()
+  
+  if id_receive == row['ID'] and  utils.verfifyPwd(pw_receive, row['password']):
+    return json.dumps(row, default=json_default)
+  else :
+    return "Login Failed"
+
+
 
     
 if __name__ == "__main__" :
