@@ -6,30 +6,23 @@ import json, datetime
 app = Flask(__name__)
 
 # 데이터 베이스 연결
-db = pymysql.connect(host="localhost", 
+def getCon():
+  return pymysql.connect(host="localhost", 
                      user="root", password="passwd", 
                      db="test3",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
-
-cursor = db.cursor()
 
 def json_default(value):
   if isinstance(value, datetime.date):
     return value.strftime('%Y-%m-%d')
   raise TypeError('not JSON serializable')  
 
-def query_db(query, args=(), one=False):
-    cur = db.cursor()
-    cur.execute(query, args)
-    r = [dict((cur.description[i][0], value) \
-               for i, value in enumerate(row)) for row in cur.fetchall()]
-    cur.connection.close()
-    return (r[0] if r else None) if one else r
-
 
 @app.route('/boardlist', methods=['GET', 'POST'])
 def boardlist() :
+    con = getCon()
+    cursor = con.cursor()
     cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
     data = cursor.fetchall()
     return_data = json.dumps(data, default=json_default)
@@ -37,19 +30,36 @@ def boardlist() :
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
 
+@app.route('/boardDetail', methods=[ 'POST'])
+def boardDetail():
+  # boardId =int(request.get_data())
+  boardId = request.get_json()
+  id = boardId['id']
+
+  con = getCon()
+  cursor = con.cursor()
+  sql = 'SELECT * FROM Board WHERE boardId = %s;'
+  cursor.execute(sql, (id, ))
+  data = cursor.fetchall()
+  cursor.close()
+    
+  # 반환할 때 json형식으로 반환
+  return json.dumps(data, default=json_default)
+
+@app.route('/boardWrite', methods=['POST'])
+def boardWrite() :
+  boardData = request.get_json()
+  print(boardData)
+
+  con = getCon()
+  cursor = con.cursor()
+  sql = "INSERT INTO Board (userId, title, content, location) VALUES ((SELECT userId FROM User WHERE ID = %s), %s, %s, %s);"
+  cursor.execute(sql, ('test', boardData['title'], boardData['content'], boardData['location']))
+  cursor.connection.commit()
 
 
-@app.route("/insert", methods=['GET', 'POST'])
-def datas() :
-    userinfo = request.form
-    user = request.get_json()
+  return '성공적으로 등록되었습니다:)'
 
-    print('/datas에 들어옴')
-    print(user['name'])
-    cursor.execute("INSERT INTO User(name, ID, password, phoneNumber) VALUES (%s, %s, %s, %s);",(user['name'], user['ID'], user['password'], user['phoneNumber']) )
-    cursor.connection.commit()
-
-    return ''
     
 if __name__ == "__main__" :
     app.run(debug=True)
