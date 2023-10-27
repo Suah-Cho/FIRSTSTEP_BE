@@ -27,19 +27,16 @@ def query_db(query, args=(), one=False):
     cur.connection.close()
     return (r[0] if r else None) if one else r
 
-@app.route("/members", methods=['GET', 'POST'])
-def members():
 
-    cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt;")
+@app.route('/boardlist', methods=['GET', 'POST'])
+def boardlist() :
+    cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
     data = cursor.fetchall()
     return_data = json.dumps(data, default=json_default)
-    return_data = return_data.strip('[')
-    return_data = return_data.strip(']')
-
-    print(return_data)
 
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
+
 
 
 @app.route("/insert", methods=['GET', 'POST'])
