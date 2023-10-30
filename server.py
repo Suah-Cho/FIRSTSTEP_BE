@@ -3,8 +3,10 @@ from flask import Flask, jsonify, request
 import utils.utils as utils
 import pymysql
 import json, datetime
+from flask_cors import CORS
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 데이터 베이스 연결
 def getCon():
