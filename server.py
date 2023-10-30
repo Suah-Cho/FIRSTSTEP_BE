@@ -40,8 +40,9 @@ def getBoardId():
 
   con = getCon()
   cursor = con.cursor()
-  sql = 'SELECT * FROM Board WHERE boardId = %s;'
-  cursor.execute(sql, (id, ))
+  # sql = 'SELECT * FROM Board WHERE boardId = %s;'
+  # sql = ""
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(id))
   data = cursor.fetchall()
   cursor.close()
     
@@ -85,12 +86,16 @@ def boardWrite() :
 
   con = getCon()
   cursor = con.cursor()
-  sql = "INSERT INTO Board (userId, title, content, location) VALUES ((SELECT userId FROM User WHERE ID = %s), %s, %s, %s);"
-  cursor.execute(sql, ('test', boardData['title'], boardData['content'], boardData['location']))
+  sql = "INSERT INTO Board (userId, title, content, location) VALUES (%s, %s, %s, %s);"
+  cursor.execute(sql, (boardData['userId'], boardData['title'], boardData['content'], boardData['location']))
   cursor.connection.commit()
 
+  sql = 'SELECT ID FROM User WHERE userId=%s;'
+  cursor.execute(sql, (boardData['userId']))
+  id = cursor.fetchone()
 
-  return '성공적으로 등록되었습니다:)'
+
+  return id
 
 # Login.js 로그인
 @app.route('/login', methods=['POST'])
