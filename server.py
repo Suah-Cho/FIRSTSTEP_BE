@@ -26,32 +26,32 @@ def json_default(value):
 def boardlist() :
     con = getCon()
     cursor = con.cursor()
-    cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
+    cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
     data = cursor.fetchall()
     # return_data = json.dumps(data, default=json_default)
 
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
 
-# BoardContent.js 게시물 상세정보
+# boardContent.js 게시물 상세정보
 @app.route('/boardDetail', methods=[ 'POST'])
-def getBoardId():
+def getboardId():
   # boardId =int(request.get_data())
   boardId = request.get_json()
   id = boardId['id']
 
   con = getCon()
   cursor = con.cursor()
-  # sql = 'SELECT * FROM Board WHERE boardId = %s;'
+  # sql = 'SELECT * FROM board WHERE boardId = %s;'
   # sql = ""
-  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM Board as b LEFT OUTER JOIN User as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(id))
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(id))
   data = cursor.fetchall()
   cursor.close()
     
   # 반환할 때 json형식으로 반환
   return json.dumps(data, default=json_default)
 
-# BoardViewContent.js 게시물 수정
+# boardViewContent.js 게시물 수정
 @app.route('/boardEdit', methods=['POST'])
 def boardEdit() :
   boardData = request.get_json()
@@ -59,14 +59,14 @@ def boardEdit() :
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE Board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardData['boardId']))
-  cursor.execute("UPDATE Board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardData['boardId']))
+  cursor.execute("UPDATE board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardData['boardId']))
+  cursor.execute("UPDATE board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardData['boardId']))
   cursor.connection.commit()
 
 
   return '성공적으로 수정되었습니다:)'
 
- # BoardViewContent.js 게시물 삭제
+ # boardViewContent.js 게시물 삭제
 @app.route('/boardDelete', methods=['POST'])
 def boardDelete() :
   boardData = request.get_json()
@@ -74,13 +74,13 @@ def boardDelete() :
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE Board SET status = 'inactive' WHERE boardId = {};".format(boardData['boardId']))
+  cursor.execute("UPDATE board SET status = 'inactive' WHERE boardId = {};".format(boardData['boardId']))
   cursor.connection.commit()
 
 
   return '성공적으로 삭제되었습니다'
 
-# BoardWrite.js 게시물 등록
+# boardWrite.js 게시물 등록
 @app.route('/boardWrite', methods=['POST'])
 def boardWrite() :
   boardData = request.get_json()
@@ -88,11 +88,11 @@ def boardWrite() :
 
   con = getCon()
   cursor = con.cursor()
-  sql = "INSERT INTO Board (userId, title, content, location) VALUES (%s, %s, %s, %s);"
+  sql = "INSERT INTO board (userId, title, content, location) VALUES (%s, %s, %s, %s);"
   cursor.execute(sql, (boardData['userId'], boardData['title'], boardData['content'], boardData['location']))
   cursor.connection.commit()
 
-  sql = 'SELECT ID FROM User WHERE userId=%s;'
+  sql = 'SELECT ID FROM user WHERE userId=%s;'
   cursor.execute(sql, (boardData['userId']))
   id = cursor.fetchone()
 
@@ -108,7 +108,7 @@ def login() :
 
   con = getCon()
   cursor = con.cursor()
-  sql = "SELECT userId, ID, password, status FROM User WHERE ID = %s;"
+  sql = "SELECT userId, ID, password, status FROM user WHERE ID = %s;"
   cursor.execute(sql, userData['userId'])
 
   row = cursor.fetchone()
@@ -118,9 +118,9 @@ def login() :
       if id_receive == row['ID'] and  utils.verfifyPwd(pw_receive, row['password']):
         return json.dumps(row, default=json_default)
     else :
-      return 'SIGNOUTUSER'
+      return 'SIGNOUTuser'
   except :
-    return "NONUSER"
+    return "NONuser"
   
   
 
@@ -130,7 +130,7 @@ def checkid() :
 
   con = getCon()
   cursor = con.cursor()
-  sql = "SELECT ID FROM User WHERE userId = %s"
+  sql = "SELECT ID FROM user WHERE userId = %s"
   cursor.execute(sql, userData['userId'])
   id = cursor.fetchone()
   print(id)
@@ -139,7 +139,7 @@ def checkid() :
 
 
 @app.route('/signup', methods=['POST'])
-def createUser():
+def createuser():
   con = getCon()
   cursor = con.cursor()
 
@@ -154,7 +154,7 @@ def createUser():
     password_confirm = userData['password_confirm']
 
     # ID existence check
-    cursor.execute("SELECT ID from User WHERE ID = %s", ID)
+    cursor.execute("SELECT ID from user WHERE ID = %s", ID)
     checkID = cursor.fetchone()
 
     if checkID:
@@ -162,7 +162,7 @@ def createUser():
       return { 'msg':  msg, 'status' : 401}, { 'Content-Type': 'application/json' }
 
     #phoneNumber existence check
-    cursor.execute("SELECT phoneNumber from User WHERE phoneNumber = %s", phoneNumber)
+    cursor.execute("SELECT phoneNumber from user WHERE phoneNumber = %s", phoneNumber)
     checkPhone= cursor.fetchone()
 
     if checkPhone :
@@ -194,7 +194,7 @@ def createUser():
 
     user_info = [ name , ID , hashed_password, phoneNumber ]
 
-    cursor.execute("INSERT INTO User(name, ID, password, phoneNumber) VALUES (%s, %s, %s, %s)", 
+    cursor.execute("INSERT INTO user(name, ID, password, phoneNumber) VALUES (%s, %s, %s, %s)", 
                   (user_info[0], user_info[1], user_info[2], user_info[3]))
     result = cursor.connection.insert_id()	
     cursor.connection.commit()
@@ -210,7 +210,7 @@ def signout() :
   
   con = getCon()
   cursor = con.cursor()
-  sql = "UPDATE User SET status = 'inactive' WHERE userId = %s and status = 'active';"
+  sql = "UPDATE user SET status = 'inactive' WHERE userId = %s and status = 'active';"
   cursor.execute(sql, userData['userId'])
   cursor.connection.commit()
 
