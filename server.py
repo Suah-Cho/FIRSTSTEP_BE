@@ -22,7 +22,30 @@ def json_default(value):
   raise TypeError('not JSON serializable')  
 
 
-@app.route('/boardlist', methods=['GET', 'POST'])
+from flask import Flask, jsonify, request
+import utils.utils as utils
+import pymysql
+import json, datetime
+from flask_cors import CORS
+
+app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+# 데이터 베이스 연결
+def getCon():
+  return pymysql.connect(host="172.17.61.26", 
+                     user="root", password="passwd", 
+                     db="test3",
+                     charset="utf8",
+                     cursorclass=pymysql.cursors.DictCursor)
+
+def json_default(value):
+  if isinstance(value, datetime.date):
+    return value.strftime('%Y-%m-%d')
+  raise TypeError('not JSON serializable')  
+
+
+@app.route('/boardlist', methods=['GET'])
 def boardlist() :
     con = getCon()
     cursor = con.cursor()
@@ -34,47 +57,51 @@ def boardlist() :
     return json.dumps(data, default=json_default)
 
 # boardContent.js 게시물 상세정보
-@app.route('/boardDetail', methods=[ 'POST'])
-def getboardId():
-  # boardId =int(request.get_data())
-  boardId = request.get_json()
-  id = boardId['id']
+@app.route('/board/detail/<boardId>', methods=['GET'])
+def getboardId(boardId : int):
 
   con = getCon()
   cursor = con.cursor()
-  # sql = 'SELECT * FROM board WHERE boardId = %s;'
-  # sql = ""
-  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(id))
-  data = cursor.fetchall()
-  cursor.close()
-    
-  # 반환할 때 json형식으로 반환
-  return json.dumps(data, default=json_default)
+
+  cursor.execute("SELECT status FROM board WHERE boardId = {};".format(boardId)) 
+  status = cursor.fetchone()
+  print(status['status']) 
+
+  if status['status'] == 'active' :
+    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+    data = cursor.fetchall()
+    cursor.close()
+      
+    # 반환할 때 json형식으로 반환
+    return json.dumps(data, default=json_default)
+  else :
+    return "DELETE"
+
+  
 
 # boardViewContent.js 게시물 수정
-@app.route('/boardEdit', methods=['POST'])
-def boardEdit() :
+@app.route('/boardEdit/<boardId>', methods=['PUT'])
+def boardEdit(boardId : int) :
   boardData = request.get_json()
   print(boardData)
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardData['boardId']))
-  cursor.execute("UPDATE board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardData['boardId']))
+  cursor.execute("UPDATE board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardId))
+  cursor.execute("UPDATE board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardId))
   cursor.connection.commit()
 
 
   return '성공적으로 수정되었습니다:)'
 
  # boardViewContent.js 게시물 삭제
-@app.route('/boardDelete', methods=['POST'])
-def boardDelete() :
-  boardData = request.get_json()
-  print(boardData)
+@app.route('/boardDelete/<boardId>', methods=['DELETE'])
+def boardDelete(boardId : int) :
+
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE board SET status = 'inactive' WHERE boardId = {};".format(boardData['boardId']))
+  cursor.execute("UPDATE board SET status = 'inactive' WHERE boardId = {};".format(boardId))
   cursor.connection.commit()
 
 
@@ -100,22 +127,22 @@ def boardWrite() :
   return id
 
 # Login.js 로그인
-@app.route('/login', methods=['POST'])
-def login() :
-  userData = request.get_json()
-  id_receive = userData['userId']
-  pw_receive = userData['userPW']
+@app.route('/login/<ID>/<PW>', methods=['GET'])
+def login(ID:str, PW:str) :
+  # userData = request.get_json()
+  # id_receive = userData['userId']
+  # pw_receive = userData['userPW']
 
   con = getCon()
   cursor = con.cursor()
   sql = "SELECT userId, ID, password, status FROM user WHERE ID = %s;"
-  cursor.execute(sql, userData['userId'])
+  cursor.execute(sql, ID)
 
   row = cursor.fetchone()
 
   try :
     if row['status'] == 'active':
-      if id_receive == row['ID'] and  utils.verfifyPwd(pw_receive, row['password']):
+      if ID == row['ID'] and  utils.verfifyPwd(PW, row['password']):
         return json.dumps(row, default=json_default)
     else :
       return 'SIGNOUTuser'
@@ -124,14 +151,13 @@ def login() :
   
   
 
-@app.route('/checkid', methods=['POST'])
-def checkid() :
-  userData = request.get_json()
+@app.route('/checkid/<userId>', methods=['GET'])
+def checkid(userId: int) :
 
   con = getCon()
   cursor = con.cursor()
   sql = "SELECT ID FROM user WHERE userId = %s"
-  cursor.execute(sql, userData['userId'])
+  cursor.execute(sql, userId)
   id = cursor.fetchone()
   print(id)
 
@@ -204,14 +230,13 @@ def createuser():
   except Exception as e :
       return {'error': str(e)}
   
-@app.route('/signout', methods=['POST'])
-def signout() :
-  userData = request.get_json()
+@app.route('/signout/<userId>', methods=['DELETE'])
+def signout(userId:int) :
   
   con = getCon()
   cursor = con.cursor()
   sql = "UPDATE user SET status = 'inactive' WHERE userId = %s and status = 'active';"
-  cursor.execute(sql, userData['userId'])
+  cursor.execute(sql, userId)
   cursor.connection.commit()
 
   return "성공적으로 회원탈퇴되었습니다."
