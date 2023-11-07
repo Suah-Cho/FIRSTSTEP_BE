@@ -51,7 +51,6 @@ def boardlist() :
     cursor = con.cursor()
     cursor.execute("SELECT b.boardId, b.title, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS date FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE b.status = 'active' ORDER BY b.createAt DESC;")
     data = cursor.fetchall()
-    # return_data = json.dumps(data, default=json_default)
 
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
@@ -111,7 +110,6 @@ def boardDelete(boardId : int) :
 @app.route('/boardWrite', methods=['POST'])
 def boardWrite() :
   boardData = request.get_json()
-  print(boardData)
 
   con = getCon()
   cursor = con.cursor()
@@ -129,9 +127,6 @@ def boardWrite() :
 # Login.js 로그인
 @app.route('/login/<ID>/<PW>', methods=['GET'])
 def login(ID:str, PW:str) :
-  # userData = request.get_json()
-  # id_receive = userData['userId']
-  # pw_receive = userData['userPW']
 
   con = getCon()
   cursor = con.cursor()
@@ -150,7 +145,7 @@ def login(ID:str, PW:str) :
     return "NONuser"
   
   
-
+# userid체크
 @app.route('/checkid/<userId>', methods=['GET'])
 def checkid(userId: int) :
 
@@ -159,7 +154,6 @@ def checkid(userId: int) :
   sql = "SELECT ID FROM user WHERE userId = %s"
   cursor.execute(sql, userId)
   id = cursor.fetchone()
-  print(id)
 
   return id
 
@@ -171,7 +165,6 @@ def createuser():
 
   try:
     userData = request.get_json()
-    # print(userData)
 
     name = userData['name']
     ID = userData['ID']
@@ -187,7 +180,7 @@ def createuser():
       msg = "회원 가입에 실패했습니다.\n  -  존재하는 아이디입니다. 다른 아이디를 사용해주세요."
       return { 'msg':  msg, 'status' : 401}, { 'Content-Type': 'application/json' }
 
-    #phoneNumber existence check
+    # phoneNumber existence check
     cursor.execute("SELECT phoneNumber from user WHERE phoneNumber = %s", phoneNumber)
     checkPhone= cursor.fetchone()
 
