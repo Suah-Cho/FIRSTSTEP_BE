@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, request
 import utils.utils as utils
 import pymysql
@@ -20,30 +19,6 @@ def json_default(value):
   if isinstance(value, datetime.date):
     return value.strftime('%Y-%m-%d')
   raise TypeError('not JSON serializable')  
-
-
-from flask import Flask, jsonify, request
-import utils.utils as utils
-import pymysql
-import json, datetime
-from flask_cors import CORS
-
-app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
-
-# 데이터 베이스 연결
-def getCon():
-  return pymysql.connect(host="172.17.61.26", 
-                     user="root", password="passwd", 
-                     db="test3",
-                     charset="utf8",
-                     cursorclass=pymysql.cursors.DictCursor)
-
-def json_default(value):
-  if isinstance(value, datetime.date):
-    return value.strftime('%Y-%m-%d')
-  raise TypeError('not JSON serializable')  
-
 
 @app.route('/boardlist', methods=['GET'])
 def boardlist() :
