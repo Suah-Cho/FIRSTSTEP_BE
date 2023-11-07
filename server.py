@@ -125,20 +125,20 @@ def boardWrite() :
   return id
 
 # Login.js 로그인
-@app.route('/login/<ID>/<PW>', methods=['GET'])
-def login(ID:str, PW:str) :
+@app.route('/login/<ID>/<password>', methods=['GET'])
+def login(ID:str, password:str) :
 
   con = getCon()
   cursor = con.cursor()
   sql = "SELECT userId, ID, password, status FROM user WHERE ID = %s;"
   cursor.execute(sql, ID)
 
-  row = cursor.fetchone()
+  user = cursor.fetchone()
 
   try :
-    if row['status'] == 'active':
-      if ID == row['ID'] and  utils.verfifyPwd(PW, row['password']):
-        return json.dumps(row, default=json_default)
+    if user['status'] == 'active':
+      if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
+        return json.dumps(user, default=json_default)
     else :
       return 'SIGNOUTuser'
   except :
