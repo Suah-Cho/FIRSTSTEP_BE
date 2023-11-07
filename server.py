@@ -12,7 +12,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 def getCon():
   return pymysql.connect(host="localhost", 
                      user="root", password="passwd", 
-                     db="test3",
+                     db="firststep",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
 
