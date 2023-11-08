@@ -11,7 +11,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 def getCon():
   return pymysql.connect(host="localhost", 
                      user="root", password="passwd", 
-                     db="firststep",
+                     db="test3",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
 
@@ -29,6 +29,16 @@ def boardlist() :
 
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
+
+@app.route('/boardlist/<searchWordKey>/<searchWord>', methods=['GET'])
+def search(searchWordKey:str, searchWord:str) :
+
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("select b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE {} LIKE '%{}%' ORDER BY b.createAt DESC;".format(searchWordKey, searchWord) )
+  data = cursor.fetchall()
+
+  return json.dumps(data, default=json_default)
 
 # boardContent.js 게시물 상세정보
 @app.route('/board/detail/<boardId>', methods=['GET'])
@@ -210,9 +220,7 @@ def signout(userId:int) :
   return "성공적으로 회원탈퇴되었습니다."
 
 
-@app.route('/search', methods=['GET'])
-def search() :
-  return '' 
+
 
 if __name__ == "__main__" :
     app.run(debug=True)
