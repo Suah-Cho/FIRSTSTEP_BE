@@ -209,6 +209,10 @@ def signout(userId:int) :
 
   return "성공적으로 회원탈퇴되었습니다."
 
-    
+
+@app.route('/search', methods=['GET'])
+def search() :
+  return '' 
+
 if __name__ == "__main__" :
     app.run(debug=True)
