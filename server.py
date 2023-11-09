@@ -11,7 +11,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 def getCon():
   return pymysql.connect(host="localhost", 
                      user="root", password="passwd", 
-                     db="test3",
+                     db="firststep",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
 
@@ -119,15 +119,18 @@ def login(ID:str, password:str) :
   cursor.execute(sql, ID)
 
   user = cursor.fetchone()
+  print(user)
 
   try :
     if user['status'] == 'active':
       if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
         return json.dumps(user, default=json_default)
+      else :
+        return 'WRONG'
     else :
-      return 'SIGNOUTuser'
+      return 'SINGOUT'
   except :
-    return "NONuser"
+    return "NON"
   
   
 # userid체크
