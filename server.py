@@ -30,6 +30,16 @@ def boardlist() :
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
 
+@app.route('/boardlist/<searchWordKey>/<searchWord>', methods=['GET'])
+def search(searchWordKey:str, searchWord:str) :
+
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("select b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE {} LIKE '%{}%' ORDER BY b.createAt DESC;".format(searchWordKey, searchWord) )
+  data = cursor.fetchall()
+
+  return json.dumps(data, default=json_default)
+
 # boardContent.js 게시물 상세정보
 @app.route('/board/detail/<boardId>', methods=['GET'])
 def getboardId(boardId : int):
@@ -109,15 +119,18 @@ def login(ID:str, password:str) :
   cursor.execute(sql, ID)
 
   user = cursor.fetchone()
+  print(user)
 
   try :
     if user['status'] == 'active':
       if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
         return json.dumps(user, default=json_default)
+      else :
+        return 'WRONG'
     else :
-      return 'SIGNOUTuser'
+      return 'SINGOUT'
   except :
-    return "NONuser"
+    return "NON"
   
   
 # userid체크
@@ -209,6 +222,8 @@ def signout(userId:int) :
 
   return "성공적으로 회원탈퇴되었습니다."
 
-    
+
+
+
 if __name__ == "__main__" :
     app.run(debug=True)
