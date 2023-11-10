@@ -222,8 +222,37 @@ def signout(userId:int) :
 
   return "성공적으로 회원탈퇴되었습니다."
 
+@app.route('/commentWrite', methods=['POST'])
+def commentwrite() :
+  commentData = request.get_json()
 
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("INSERT INTO comment(userId, boardId, content) VALUES (%s, %s, %s)", 
+                  (commentData['userId'], commentData['boardId'], commentData['content']))
+  cursor.connection.commit()
+  return '댓글이 정상적으로 입력되었습니다.'
 
+@app.route('/boardlist/<boardId>/commentlist', methods=['GET'])
+def commentlist(boardId:int):
+  con = getCon()
+  cursur = con.cursor()
+  cursur.execute("SELECT c.commentId, c.userId, u.ID, c.content, date_format(c.createAt, '%Y-%m-%d') AS createAt FROM comment as c LEFT OUTER JOIN user as u on u.userId=c.userId WHERE c.boardId = {} AND c.status = 'active' ORDER BY c.createAt DESC;".format(boardId))
+  commentData = cursur.fetchall()
+  # print("commentData: ", commentData)
+
+  return json.dumps(commentData, default=json_default)
+
+@app.route('/commentdelete/<commentId>', methods=['DELETE'])
+def commentdelete(commentId:int) :
+  print(commentId)
+
+  con = getCon()
+  cursur = con.cursor()
+  cursur.execute("UPDATE comment SET status = 'inactive' WHERE commentId = {};".format(commentId))
+  cursur.connection.commit()
+
+  return "삭제완료"
 
 if __name__ == "__main__" :
     app.run(debug=True)
