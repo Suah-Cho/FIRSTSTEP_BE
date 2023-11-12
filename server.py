@@ -71,8 +71,7 @@ def boardEdit(boardId : int) :
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardId))
-  cursor.execute("UPDATE board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardId))
+  cursor.execute("UPDATE board SET title = '{}',content = '{}' WHERE boardId = {};".format(boardData['title'], boardData['content'], boardId))
   cursor.connection.commit()
 
 
@@ -100,6 +99,14 @@ def boardWrite() :
   cursor = con.cursor()
   sql = "INSERT INTO board (userId, title, content, location) VALUES (%s, %s, %s, %s);"
   cursor.execute(sql, (boardData['userId'], boardData['title'], boardData['content'], boardData['location']))
+  cursor.connection.commit()
+
+  sql = "SELECT boardId FROM board ORDER BY boardId DESC LIMIT 1;"
+  cursor.execute(sql)
+  boardId = cursor.fetchone()
+
+  sql = "INSERT INTO rent (boardId) values (%s);"
+  cursor.execute(sql, (boardId['boardId']))
   cursor.connection.commit()
 
   sql = 'SELECT ID FROM user WHERE userId=%s;'
