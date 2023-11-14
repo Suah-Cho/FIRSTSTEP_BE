@@ -52,14 +52,13 @@ def getboardId(boardId : int):
   
   dataStatus = cursor.fetchall()
   # boardStatus - unactive
+  print("========================================================")
+  print(dataStatus)
   if dataStatus[0]["status"] == 'unactive' :
     return "DELETE"
   
   # boardStatus - active
   else :
-   
-    # cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(boardId))
-    
     cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
     
     data = cursor.fetchall()
@@ -67,19 +66,32 @@ def getboardId(boardId : int):
       
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
-  
-  # elif dataStatus[0]['rent'] == "unactive":
-  #   print("----------------",dataStatus[0]["rent"]) 
 
-  #   return "unactive"
+#Mypage.js 대여목록조회
+@app.route('/mypage/<userId>', methods=['GET'])
+def getRentList(userId : str):
+  print("getRentList",userId)
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.rentId={} and rent ='active' ORDER BY b.createAt DESC;".format(userId))
     
-  # elif dataStatus[0]['rent']=="active":
-  #   print("----------------",dataStatus[0]["rent"]) 
+  data = cursor.fetchall()
+  cursor.close()
+      
+  # 반환할 때 json형식으로 반환
+  return json.dumps(data, default=json_default)
 
-  #   return "active"
-
+#Mypage.js 사용자 ID => name
+@app.route('/mypage/chageName/<userId>', methods=['GET'])
+def chageIdToName(userId : str):
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("SELECT name FROM user WHERE userId = {};".format(userId))
+  data = cursor.fetchone()
+  cursor.close()
   
-
+  return data
+  
 # boardViewContent.js 게시물 수정
 @app.route('/boardEdit/<boardId>', methods=['PUT'])
 def boardEdit(boardId : int) :
