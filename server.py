@@ -10,7 +10,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # 데이터 베이스 연결
 def getCon():
   return pymysql.connect(host="localhost", 
-                     user="root", password="1234", 
+                     user="root", password="passwd", 
                      db="firststep",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
@@ -164,15 +164,19 @@ def login(ID:str, password:str) :
   print(user)
 
   try :
-    if user['status'] == 'active':
-      if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
-        return json.dumps(user, default=json_default)
+    if len(user) > 0 :
+      if user['status'] == 'active':
+        print(utils.verfifyPwd(password, user['password']))
+        if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
+          return json.dumps(user, default=json_default)
+        else :
+          return 'WRONG'
       else :
-        return 'WRONG'
+        return 'SINGOUT'
     else :
-      return 'SINGOUT'
-  except :
-    return "NON"
+      return "NON"
+  except Exception as e:
+    return {"msg" : str(e)}
   
   
 # userid체크
@@ -295,6 +299,62 @@ def commentdelete(commentId:int) :
   cursur.connection.commit()
 
   return "삭제완료"
+
+@app.route('/changepassword/<userId>', methods=['PUT'])
+def changepassword(userId : int) :
+  con = getCon()
+  cursor = con.cursor()
+  
+  try :
+    passwordData = request.get_json()
+    print(passwordData)
+
+    constpassword = passwordData['constpassword']
+    newPassword = passwordData['newPassword']
+
+    sql = "SELECT password FROM user WHERE userId=%s;"
+    cursor.execute(sql, userId)
+    password = cursor.fetchone()
+    print(password)
+
+    if utils.verfifyPwd(constpassword, password['password']) :
+      hashed_password = utils.hash_password(str(newPassword))
+      
+      sql = 'UPDATE user SET password="%s" WHERE userId=%s;'
+      cursor.execute(sql, (hashed_password, userId))
+      cursor.connection.commit()
+
+      cursor.execute("select * from user where userId={}".format(userId))
+      user = cursor.fetchone()
+      print(user)
+      
+      return "SUCCESS"
+    else :
+      return 'FAIL'
+  except Exception as e :
+    return {"error":str(e)}
+
+
+
+
+
+
+@app.route('/chagne/<userId>', methods=['PUT'])
+def chagne(userId : int) :
+  con = getCon()
+  cursor = con.cursor()
+
+  passwordData = request.get_json()
+  constPassword = passwordData['']
+
+  hashed_password = utils.hash_password(str(passwordData['newPassword']))
+
+  sql = 'UPDATE user SET password="%s" WHERE userId=%s;'
+  cursor.execute(sql, (hashed_password, userId))
+  cursor.connection.commit()
+
+  return 'success'
+
 
 if __name__ == "__main__" :
     app.run(debug=True)
