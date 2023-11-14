@@ -335,26 +335,5 @@ def changepassword(userId : int) :
     return {"error":str(e)}
 
 
-
-
-
-
-@app.route('/chagne/<userId>', methods=['PUT'])
-def chagne(userId : int) :
-  con = getCon()
-  cursor = con.cursor()
-
-  passwordData = request.get_json()
-  constPassword = passwordData['']
-
-  hashed_password = utils.hash_password(str(passwordData['newPassword']))
-
-  sql = 'UPDATE user SET password="%s" WHERE userId=%s;'
-  cursor.execute(sql, (hashed_password, userId))
-  cursor.connection.commit()
-
-  return 'success'
-
-
 if __name__ == "__main__" :
     app.run(debug=True)
