@@ -100,8 +100,7 @@ def boardEdit(boardId : int) :
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("UPDATE board SET title = '{}' WHERE boardId = {};".format(boardData['title'], boardId))
-  cursor.execute("UPDATE board SET content = '{}' WHERE boardId = {};".format(boardData['content'], boardId))
+  cursor.execute("UPDATE board SET title = '{}',content = '{}' WHERE boardId = {};".format(boardData['title'], boardData['content'], boardId))
   cursor.connection.commit()
 
   cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
@@ -135,6 +134,14 @@ def boardWrite() :
   cursor = con.cursor()
   sql = "INSERT INTO board (userId, title, content, location) VALUES (%s, %s, %s, %s);"
   cursor.execute(sql, (boardData['userId'], boardData['title'], boardData['content'], boardData['location']))
+  cursor.connection.commit()
+
+  sql = "SELECT boardId FROM board ORDER BY boardId DESC LIMIT 1;"
+  cursor.execute(sql)
+  boardId = cursor.fetchone()
+
+  sql = "INSERT INTO rent (boardId) values (%s);"
+  cursor.execute(sql, (boardId['boardId']))
   cursor.connection.commit()
 
   sql = 'SELECT ID FROM user WHERE userId=%s;'
@@ -257,8 +264,37 @@ def signout(userId:int) :
 
   return "성공적으로 회원탈퇴되었습니다."
 
+@app.route('/commentWrite', methods=['POST'])
+def commentwrite() :
+  commentData = request.get_json()
 
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("INSERT INTO comment(userId, boardId, content) VALUES (%s, %s, %s)", 
+                  (commentData['userId'], commentData['boardId'], commentData['content']))
+  cursor.connection.commit()
+  return '댓글이 정상적으로 입력되었습니다.'
 
+@app.route('/boardlist/<boardId>/commentlist', methods=['GET'])
+def commentlist(boardId:int):
+  con = getCon()
+  cursur = con.cursor()
+  cursur.execute("SELECT c.commentId, c.userId, u.ID, c.content, date_format(c.createAt, '%Y-%m-%d') AS createAt FROM comment as c LEFT OUTER JOIN user as u on u.userId=c.userId WHERE c.boardId = {} AND c.status = 'active' ORDER BY c.createAt DESC;".format(boardId))
+  commentData = cursur.fetchall()
+  # print("commentData: ", commentData)
+
+  return json.dumps(commentData, default=json_default)
+
+@app.route('/commentdelete/<commentId>', methods=['DELETE'])
+def commentdelete(commentId:int) :
+  print(commentId)
+
+  con = getCon()
+  cursur = con.cursor()
+  cursur.execute("UPDATE comment SET status = 'inactive' WHERE commentId = {};".format(commentId))
+  cursur.connection.commit()
+
+  return "삭제완료"
 
 if __name__ == "__main__" :
     app.run(debug=True)
