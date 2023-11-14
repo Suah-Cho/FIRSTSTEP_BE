@@ -10,7 +10,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # 데이터 베이스 연결
 def getCon():
   return pymysql.connect(host="localhost", 
-                     user="root", password="passwd", 
+                     user="root", password="1234", 
                      db="firststep",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
@@ -47,22 +47,51 @@ def getboardId(boardId : int):
   con = getCon()
   cursor = con.cursor()
 
-  cursor.execute("SELECT status FROM board WHERE boardId = {};".format(boardId)) 
-  status = cursor.fetchone()
-  print(status['status']) 
-
-  if status['status'] == 'active' :
-    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt  FROM board as b LEFT OUTER JOIN user as u on u.userId = b.userId WHERE boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+  # cursor.execute("SELECT status FROM board WHERE boardId = {};".format(boardId)) 
+  cursor.execute("SELECT b.status , r.rent FROM board as b, rent as r WHERE b.boardId ={};".format(boardId)) 
+  
+  dataStatus = cursor.fetchall()
+  # boardStatus - unactive
+  print("========================================================")
+  print(dataStatus)
+  if dataStatus[0]["status"] == 'unactive' :
+    return "DELETE"
+  
+  # boardStatus - active
+  else :
+    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+    
     data = cursor.fetchall()
     cursor.close()
       
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
-  else :
-    return "DELETE"
 
+#Mypage.js 대여목록조회
+@app.route('/mypage/<userId>', methods=['GET'])
+def getRentList(userId : str):
+  print("getRentList",userId)
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.rentId={} and rent ='active' ORDER BY b.createAt DESC;".format(userId))
+    
+  data = cursor.fetchall()
+  cursor.close()
+      
+  # 반환할 때 json형식으로 반환
+  return json.dumps(data, default=json_default)
+
+#Mypage.js 사용자 ID => name
+@app.route('/mypage/chageName/<userId>', methods=['GET'])
+def chageIdToName(userId : str):
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("SELECT name FROM user WHERE userId = {};".format(userId))
+  data = cursor.fetchone()
+  cursor.close()
   
-
+  return data
+  
 # boardViewContent.js 게시물 수정
 @app.route('/boardEdit/<boardId>', methods=['PUT'])
 def boardEdit(boardId : int) :
@@ -74,8 +103,14 @@ def boardEdit(boardId : int) :
   cursor.execute("UPDATE board SET title = '{}',content = '{}' WHERE boardId = {};".format(boardData['title'], boardData['content'], boardId))
   cursor.connection.commit()
 
-
-  return '성공적으로 수정되었습니다:)'
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+    
+  data = cursor.fetchall()
+  cursor.close()
+      
+    # 반환할 때 json형식으로 반환
+  return json.dumps(data, default=json_default)
+  # return '성공적으로 수정되었습니다:)'
 
  # boardViewContent.js 게시물 삭제
 @app.route('/boardDelete/<boardId>', methods=['DELETE'])
