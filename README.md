@@ -1,69 +1,45 @@
-# SSG_PROJECT_02
+# FIRSTSTEP 한걸음 대여소
+## 서비스 소개
+필요한 물폼 혹은 필요 없는 물품을 서로 공유하며 더 좋은 세상으로 한 걸음 나아가는 커뮤니티
 
-### FLASK → REACT 데이터 전송
 
-package.json
 
-```json
-"proxy": "받아올 데이터 주소"
-예) "proxt" : "http://localhost:5000"
-```
+## 기능 
+- 게시판 등록/수정/보기/삭제
+- 로그인/로그아웃
+- 회원가입/회원탈퇴
+- 마이페이지(대여물품 조회, 비밀번호 변경)
+- 게시물 대여/반납
 
-server.py
+## 팀원
+|이름|담당|
+|:---:|:---:|
+|곽민주|마이페이지(대여 목록 조회), 게시물 조회/수정/삭제, 게시물 대여/반납|
+|조수아|데이터베이스, 게시판, 게시물 대여/반납, 로그인/로그아웃, 회원탈퇴, 마이페이지(비밀번호 변경)|
+|김기성|로그인|
+|김서연|팀장, 데이터베이스, 회원가입|
+|신명호|홈|
 
-```python
-from flask import Flask, jsonify
-import pymysql
+## 아키텍처
+![Alt text](image.png)
 
-app = Flask(__name__)
+## 데이터베이스
+![Alt text](image-1.png)
 
-# 데이터 베이스 연결
-db = pymysql.connect(host="localhost", 
-                     user="root", password="passwd", 
-                     db="test3",
-                     charset="utf8")
+## 기술 스택
+### Front-end
+![Static Badge](https://img.shields.io/badge/React-%2361DAFB?logo=react&logoColor=white)
+![Static Badge](https://img.shields.io/badge/HTML5-%23E34F26?logo=html5&logoColor=white)
+![Static Badge](https://img.shields.io/badge/CSS3-%231572B6?logo=css3&logoColor=white)
 
-cursor = db.cursor()
 
-// 날짜를 json형식으로
-def json_default(value):
-  if isinstance(value, datetime.date):
-    return value.strftime('%Y-%m-%d')
-  raise TypeError('not JSON serializable')  
+### Backend
+![Static Badge](https://img.shields.io/badge/Python3-3776AB?logo=Python&logoColor=%23FFFFFF) ![Static Badge](https://img.shields.io/badge/Flask-000000?logo=Flask&logoColor=%23FFFFFF)
 
-// 데이터를 json으로 바꿔주는 함수
-def query_db(query, args=(), one=False):
-    cur = db.cursor()
-    cur.execute(query, args)
-    r = [dict((cur.description[i][0], value) \
-               for i, value in enumerate(row)) for row in cur.fetchall()]
-    cur.connection.close()
-    return (r[0] if r else None) if one else r
+### Database
+![Static Badge](https://img.shields.io/badge/MySQL-%234479A1?logo=mysql&logoColor=white)
 
-@app.route("/members", methods=['GET', 'POST'])
-def members():
+### Infra
+![Static Badge](https://img.shields.io/badge/Docker-%232496ED?logo=docker&logoColor=white)
+![Static Badge](https://img.shields.io/badge/Kubernetes-%23326CE5?logo=kubernetes&logoColor=white)
 
-    cursor.execute("select * from user;")
-    data = cursor.fetchall()
-
-    ## 반환할 때 json형식으로 반환
-    return jsonify(data)
-
-if __name__ == "__main__" :
-    app.run(debug=True)
-```
-
-App.js → useEffect&axios를 이용해 데이터 받아오기
-
-```jsx
-useEffect(() => {
-    axios.get('/members')
-    .then(res => {
-      console.log(res);
-      setData(res.data);
-      console.log(data[0][0]);
-    }).catch(err => console.log(err));
-  }, []);
-```
-
-데이터를 화면에 표기할 때 형식을 맞춰야 한다. → (ERROR : Objects are not valid as a React child (found: object with keys {}). If you meant to render a collection of children, use an array instead.)
