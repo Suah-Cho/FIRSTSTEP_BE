@@ -59,7 +59,7 @@ def getboardId(boardId : int):
   
   # boardStatus - active
   else :
-    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
+    cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.content, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rent, r.userId AS rentusreId  FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE b.boardId = {} ORDER BY b.createAt DESC;".format(boardId))
     
     data = cursor.fetchall()
     cursor.close()
@@ -73,7 +73,7 @@ def getRentList(userId : str):
   print("getRentList",userId)
   con = getCon()
   cursor = con.cursor()
-  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.rentId={} and rent ='active' ORDER BY b.createAt DESC;".format(userId))
+  cursor.execute("SELECT b.boardId, b.title, u.userId, u.ID, b.location, date_format(b.createAt, '%Y-%m-%d') AS createAt, r.rentId, r.rent ,date_format(r.rentAt, '%Y-%m-%d') AS rentAt, date_format(r.returnAt, '%Y-%m-%d') AS returnAt FROM board as b LEFT JOIN user as u on u.userId = b.userId LEFT JOIN rent as r on r.boardId = b.boardId WHERE r.userId={} and rent ='inactive' ORDER BY b.createAt DESC;".format(userId))
     
   data = cursor.fetchall()
   cursor.close()
@@ -129,6 +129,8 @@ def boardDelete(boardId : int) :
 @app.route('/boardWrite', methods=['POST'])
 def boardWrite() :
   boardData = request.get_json()
+  print("boardData['userId']1 : ", boardData['userId'])
+
 
   con = getCon()
   cursor = con.cursor()
@@ -139,10 +141,16 @@ def boardWrite() :
   sql = "SELECT boardId FROM board ORDER BY boardId DESC LIMIT 1;"
   cursor.execute(sql)
   boardId = cursor.fetchone()
-
+  
   sql = "INSERT INTO rent (boardId) values (%s);"
   cursor.execute(sql, (boardId['boardId']))
   cursor.connection.commit()
+
+  if boardData['userId'] == '1' :
+    print("boardData['userId']2 : ", boardData['userId'])
+    sql = "UPDATE rent SET rent='disable' WHERE boardId=%s;"
+    cursor.execute(sql, (boardId['boardId']))
+    cursor.connection.commit()
 
   sql = 'SELECT ID FROM user WHERE userId=%s;'
   cursor.execute(sql, (boardData['userId']))
@@ -333,7 +341,32 @@ def changepassword(userId:int):
 
   return "SUCCESS"
 
+@app.route('/boardrent/<userId>', methods=['PUT'])
+def boardrent(userId:int) :
+  data = request.get_json()
+  returnAt = data['returnDate'][:10].replace('-','')
+  # returndate = datetime.datetime.strptime(returnAt, '%Y-%m-%d')
+  
+  print(returnAt)
+  # print("UPDATE rent SET userId={},rentAt=now(),returnAt=date_format({}, '%y-%m-%d'),rent='inactive' WHERE boardId={};".format(userId, returnAt, data['boardId']))
 
+  con = getCon()
+  cursor = con.cursor()
+  cursor.execute("UPDATE rent SET userId={},rentAt=now(),returnAt=date_format({}, '%y-%m-%d'),rent='inactive' WHERE boardId={};".format(userId, returnAt, data['boardId']))
+  cursor.connection.commit()
+
+  return 'SUCCESS'
+
+@app.route('/boardreturn/<boardId>', methods=['DELETE'])
+def boardreturn(boardId:int) :
+
+  con = getCon()
+  cursor = con.cursor()
+  sql = "UPDATE rent SET rent='active', userId=null, rentAt=null, returnAt=null WHERE boardId=%s;"
+  cursor.execute(sql, (boardId))
+  cursor.connection.commit()
+
+  return "SUCCESS"
 
 if __name__ == "__main__" :
     app.run(debug=True)
