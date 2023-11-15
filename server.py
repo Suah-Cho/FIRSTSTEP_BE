@@ -10,7 +10,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # 데이터 베이스 연결
 def getCon():
   return pymysql.connect(host="localhost", 
-                     user="root", password="1234", 
+                     user="root", password="passwd", 
                      db="firststep",
                      charset="utf8",
                      cursorclass=pymysql.cursors.DictCursor)
@@ -295,6 +295,45 @@ def commentdelete(commentId:int) :
   cursur.connection.commit()
 
   return "삭제완료"
+
+@app.route('/checkpassword/<userId>', methods=['POST'])
+def checkpassword(userId: int) :
+  password = request.get_json()
+  print(password['constpassword'], type(password['constpassword']))
+  
+  con = getCon()
+  cursor = con.cursor()
+  sql = "SELECT password FROM user WHERE userId=%s;"
+  cursor.execute(sql, userId)
+  data = cursor.fetchone()
+  print(data['password'], type(data['password']))
+
+  
+
+  print(utils.verfifyPwd(password['constpassword'], data['password']))
+  
+  if utils.verfifyPwd(password['constpassword'], data['password']) :
+    return "CORRECT"
+  else :
+    return "WRONG"
+
+@app.route('/changepassword/<userId>', methods=['PUT'])
+def changepassword(userId:int):
+  data = request.get_json()
+  print(data['newPassword'])
+
+  hash_newpassword = utils.hash_password(str(data['newPassword']))
+  print(hash_newpassword)
+
+  con = getCon()
+  cursor = con.cursor()
+  sql = "UPDATE user SET password=%s WHERE userId=%s;"
+  cursor.execute(sql, (hash_newpassword, userId))
+  cursor.connection.commit()
+
+  return "SUCCESS"
+
+
 
 if __name__ == "__main__" :
     app.run(debug=True)
