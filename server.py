@@ -164,19 +164,15 @@ def login(ID:str, password:str) :
   print(user)
 
   try :
-    if len(user) > 0 :
-      if user['status'] == 'active':
-        print(utils.verfifyPwd(password, user['password']))
-        if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
-          return json.dumps(user, default=json_default)
-        else :
-          return 'WRONG'
+    if user['status'] == 'active':
+      if ID == user['ID'] and  utils.verfifyPwd(password, user['password']):
+        return json.dumps(user, default=json_default)
       else :
-        return 'SINGOUT'
+        return 'WRONG'
     else :
-      return "NON"
-  except Exception as e:
-    return {"msg" : str(e)}
+      return 'SINGOUT'
+  except :
+    return "NON"
   
   
 # userid체크
@@ -300,39 +296,43 @@ def commentdelete(commentId:int) :
 
   return "삭제완료"
 
-@app.route('/changepassword/<userId>', methods=['PUT'])
-def changepassword(userId : int) :
+@app.route('/checkpassword/<userId>', methods=['POST'])
+def checkpassword(userId: int) :
+  password = request.get_json()
+  print(password['constpassword'], type(password['constpassword']))
+  
   con = getCon()
   cursor = con.cursor()
+  sql = "SELECT password FROM user WHERE userId=%s;"
+  cursor.execute(sql, userId)
+  data = cursor.fetchone()
+  print(data['password'], type(data['password']))
+
   
-  try :
-    passwordData = request.get_json()
-    print(passwordData)
 
-    constpassword = passwordData['constpassword']
-    newPassword = passwordData['newPassword']
+  print(utils.verfifyPwd(password['constpassword'], data['password']))
+  
+  if utils.verfifyPwd(password['constpassword'], data['password']) :
+    return "CORRECT"
+  else :
+    return "WRONG"
 
-    sql = "SELECT password FROM user WHERE userId=%s;"
-    cursor.execute(sql, userId)
-    password = cursor.fetchone()
-    print(password)
+@app.route('/changepassword/<userId>', methods=['PUT'])
+def changepassword(userId:int):
+  data = request.get_json()
+  print(data['newPassword'])
 
-    if utils.verfifyPwd(constpassword, password['password']) :
-      hashed_password = utils.hash_password(str(newPassword))
-      
-      sql = 'UPDATE user SET password="%s" WHERE userId=%s;'
-      cursor.execute(sql, (hashed_password, userId))
-      cursor.connection.commit()
+  hash_newpassword = utils.hash_password(str(data['newPassword']))
+  print(hash_newpassword)
 
-      cursor.execute("select * from user where userId={}".format(userId))
-      user = cursor.fetchone()
-      print(user)
-      
-      return "SUCCESS"
-    else :
-      return 'FAIL'
-  except Exception as e :
-    return {"error":str(e)}
+  con = getCon()
+  cursor = con.cursor()
+  sql = "UPDATE user SET password=%s WHERE userId=%s;"
+  cursor.execute(sql, (hash_newpassword, userId))
+  cursor.connection.commit()
+
+  return "SUCCESS"
+
 
 
 if __name__ == "__main__" :
