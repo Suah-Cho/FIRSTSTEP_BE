@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request
 import utils.utils as utils
 import pymysql
 import json, datetime
@@ -31,7 +31,7 @@ def boardlist() :
     # 반환할 때 json형식으로 반환
     return json.dumps(data, default=json_default)
 
-@app.route('/boardlist/<searchWordKey>/<searchWord>', methods=['GET'])
+@app.route('/boardlist', methods=['GET'])
 def search(searchWordKey:str, searchWord:str) :
 
   con = getCon()
