@@ -9,10 +9,11 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 데이터 베이스 연결
 def getCon():
-  return pymysql.connect(host="localhost", 
-                     user="root", password="1234", 
+  return pymysql.connect(host="myrds.cxeh18id8uka.us-west-1.rds.amazonaws.com", 
+                     user="admin", password="password", 
                      db="firststep",
                      charset="utf8",
+                     port=3306,
                      cursorclass=pymysql.cursors.DictCursor)
 
 def json_default(value):
@@ -369,4 +370,4 @@ def boardreturn(boardId:int) :
   return "SUCCESS"
 
 if __name__ == "__main__" :
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=False)
