@@ -12,13 +12,15 @@
 필요한 물폼 혹은 필요 없는 물품을 서로 공유하며 더 좋은 세상으로 한 걸음 나아가는 커뮤니티
 ```
 ## 🤼‍♂️Author
-```sh
-🐯 곽민주 : 마이페이지, 게시물 조회/수정/삭제, 게시물 대여/반납
-🐉 조수아 : 데이터베이스, 게시판, 게시물 대여/반납, 로그인/로그아웃, 회원탈퇴, 비밀번호 변경
-🐺 김기성 : 로그인
-🐶 김서연 : 팀장, 회원가입
-🐱 신명호 : 홈
-```
+
+|팀원|역할분담|
+|:---:|---|
+|🐯 곽민주|마이페이지, 게시물 조회/수정/삭제, 게시물 대여/반납|
+|🐉 조수아|데이터베이스, 게시판, 게시물 대여/반납, 로그인/로그아웃, 회원탈퇴, 비밀번호 변경 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+|🐺 김기성|로그인|
+|🐶 김서연|팀장, 회원가입|
+|🐱 신명호|홈|
+
 
 ## 🔍 기능
 ```sh
