@@ -5,7 +5,7 @@
     <img src="./readMesrc/logo.PNG" alt="Firststep" style="zoom:76%;" align="center"/>
 </center>
 <br>
-> First Step / 한걸음 대여소 (신세계 I&C 2nd 모듈 프로젝트)<br>
+First Step / 한걸음 대여소 (신세계 I&C 2nd 모듈 프로젝트)<br>
 
 ## ✨ Description
 ```sh
